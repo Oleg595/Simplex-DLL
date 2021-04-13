@@ -1,21 +1,15 @@
 #pragma once
 
-#ifdef SIMPLEX_H_EXPORTS
-#define SIMPLEX_H __declspec(dllexport)
-#else
-#define SIMPLEX_H __declspec(dllimport)
-#endif
-
 #include <vector>
 #include <iostream>
 #include "Matrix.h"
 
-enum __declspec(dllexport) TT {
+enum TT {
 	TT_MIN = 0,
 	TT_MAX
 };
 
-class __declspec(dllexport) Simplex {
+class Simplex {
 public:
 	Simplex(Matrix&, std::vector<double>&, std::vector<double>&, TT type_task);
 	double answer_func();

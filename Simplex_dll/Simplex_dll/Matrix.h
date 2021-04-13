@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-struct __declspec(dllexport) Matrix {
+struct Matrix {
 private:
 	struct Vector;
 public:
