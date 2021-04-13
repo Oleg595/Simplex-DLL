@@ -144,11 +144,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Linear.cpp" />
+    <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Simplex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Linear.h" />
+    <ClInclude Include="Matrix.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Simplex.h" />
   </ItemGroup>

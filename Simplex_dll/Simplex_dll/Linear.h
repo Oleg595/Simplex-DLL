@@ -2,9 +2,9 @@
 #include <iostream>
 #include <vector>
 #include <limits>
-#include"Simplex.h"
-#include "Parser.h"
 #include "Simplex.h"
+#include "Parser.h"
+#include "Matrix.h"
 
 struct SeidelMethod;
 struct Limitations;

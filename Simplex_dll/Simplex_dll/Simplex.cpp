@@ -1,129 +1,16 @@
 #include"Simplex.h"
+#define EPS 10e-5
 
-Matrix::Matrix(size_t n, size_t m = 0) : n{ n }, m{ m == 0 ? n : m } {
-	matrix = new double* [n];
-	for (size_t i = 0; i < n; ++i) {
-		matrix[i] = new double[m];
-		for (size_t j = 0; j < m; ++j) {
-			matrix[i][j] = 0;
-		}
-	}
-}
-
-Matrix::Matrix(Matrix const& other) : Matrix(other.n, other.m) {
-	for (size_t i = 0; i < n; ++i) {
-		for (size_t j = 0; j < m; ++j) {
-			matrix[i][j] = other.matrix[i][j];
-		}
-	}
-}
-
-Matrix::Vector::Vector(double* vector) : vector{ vector } {}
-
-Matrix& Matrix::operator=(Matrix other) {
-	std::swap(matrix, other.matrix);
-	std::swap(n, other.n);
-	std::swap(m, other.m);
-	return *this;
-}
-
-double& Matrix::Vector::operator[](size_t index) {
-	return vector[index];
-}
-
-Matrix::Vector Matrix::operator[](size_t index) {
-	return Vector(matrix[index]);
-}
-
-std::vector<double> Matrix::Gauss(std::vector<double>* b) {
-	for (size_t i = 0; i < n; i++) {
-		size_t str;
-		for (size_t j = 0; j < m; j++) {
-			if (fabs(matrix[i][j]) > pow(10, -5)) {
-				str = j;
-				break;
-			}
-		}
-		for (size_t j = 0; j < m; j++) {
-			if (j != str)
-				matrix[i][j] /= matrix[i][str];
-		}
-		(*b)[i] /= matrix[i][str];
-		matrix[i][str] = 1.;
-		for (size_t j = 0; j < n; j++) {
-			if (j != i) {
-				for (size_t q = 0; q < m; q++) {
-					if (q != str)
-						matrix[j][q] -= matrix[j][str] * matrix[i][q];
-				}
-				(*b)[j] -= matrix[j][str] * (*b)[i];
-				matrix[j][str] = 0.;
-			}
-		}
-	}
-	return (*b);
-}
-
-void Matrix::Change_Str(size_t i, size_t j) {
-	for (size_t q = 0; q < m; q++) {
-		double num = matrix[i][q];
-		matrix[i][q] = matrix[j][q];
-		matrix[j][q] = num;
-	}
-}
-
-void Matrix::Change_Col(size_t i, size_t j) {
-	for (size_t q = 0; q < n; q++) {
-		double num = matrix[q][i];
-		matrix[q][i] = matrix[q][j];
-		matrix[q][j] = num;
-	}
-}
-
-void Matrix::print() const {
-	for (size_t i = 0; i < n; ++i) {
-		for (size_t j = 0; j < m; ++j) {
-			std::cout << matrix[i][j] << ' ';
-		}
-		std::cout << std::endl;
-	}
-}
-
-size_t Matrix::get_n() const {
-	return n;
-}
-
-size_t Matrix::get_m() const {
-	return m;
-}
-
-Matrix Matrix::get_transposed() const {
-	Matrix AT(m, n);
-	for (size_t i = 0; i < m; ++i) {
-		for (size_t j = 0; j < n; ++j) {
-			AT[i][j] = matrix[j][i];
-		}
-	}
-	return AT;
-}
-
-Matrix::~Matrix() {
-	for (size_t i = 0; i < n; ++i) {
-		delete[] matrix[i];
-	}
-	delete[] matrix;
-}
-
-Simplex::Simplex(Matrix* A, std::vector<double>* st, std::vector<double>* c, TT type_task) {
+Simplex::Simplex(Matrix& A, std::vector<double>& st, std::vector<double>& c, TT type_task) {
 	have_ans = true;
-	std::vector<double> b = A->Gauss(st);
-	for (size_t i = 0; i < A->get_n(); i++) {
-		std::vector<double>* time_vector = new std::vector<double>();
-		time_vector->push_back(b[i]);
-		for (size_t j = 0; j < A->get_m(); j++) {
-			time_vector->push_back((*A)[i][j]);
+	std::vector<double> b = A.gauss(st);
+	for (size_t i = 0; i < A.get_n(); i++) {
+		std::vector<double> time_vector;
+		time_vector.push_back(b[i]);
+		for (size_t j = 0; j < A.get_m(); j++) {
+			time_vector.push_back(A[i][j]);
 		}
-		data.push_back({ (*time_vector), Num_Var(time_vector) });
+		data.push_back({ time_vector, Num_Var(time_vector) });
 	}
 	Positive_b();
 	if (have_ans == false)
@@ -133,14 +20,14 @@ Simplex::Simplex(Matrix* A, std::vector<double>* st, std::vector<double>* c, TT 
 	double coef = 1.;
 	if (type_task == TT_MAX)
 		coef = -1.;
-	for (i = 0; i < c->size(); i++) {
-		func.push_back(coef * (*c)[i]);
+	for (i = 0; i < c.size(); i++) {
+		func.push_back(coef * c[i]);
 	}
-	for (; i < A->get_m(); i++) {
+	for (; i < A.get_m(); i++) {
 		func.push_back(0.);
 	}
 	size_t max = 0;
-	int count = 0;
+	size_t count = 0;
 	while (((max = Check()) != func.size()) && (Check_Data())) {
 		if (count < func.size()) {
 			Choose(max + 1, Determine(max + 1));
@@ -150,21 +37,21 @@ Simplex::Simplex(Matrix* A, std::vector<double>* st, std::vector<double>* c, TT 
 		}
 		else {
 			size_t var = 0;
-			size_t min;
+			size_t min = 0;
 			for (size_t i = 0; i < delta.size(); i++) {
-				if (delta[i] > pow(10, -5)) {
+				if (delta[i] > EPS) {
 					var = i;
 					break;
 				}
 			}
 			for (size_t i = 0; i < data.size(); i++) {
-				if ((fabs(data[i].first[var + 1]) > pow(10, -5)) && (data[i].first[0] / data[i].first[var + 1] > pow(10, -5))) {
+				if ((fabs(data[i].first[var + 1]) > EPS) && (data[i].first[0] / data[i].first[var + 1] > EPS)) {
 					min = i;
 					break;
 				}
 			}
 			for (size_t i = min + 1; i < data.size(); i++) {
-				if ((fabs(data[i].first[var + 1]) > pow(10, -5)) && (data[0].first[var + 1] / data[i].first[var + 1] > pow(10, -5)) && (data[0].first[var + 1] / data[i].first[var + 1] > pow(10, -5))) {
+				if ((fabs(data[i].first[var + 1]) > EPS) && (data[0].first[var + 1] / data[i].first[var + 1] > EPS) && (data[0].first[var + 1] / data[i].first[var + 1] > EPS)) {
 					min = i;
 				}
 			}
@@ -182,23 +69,24 @@ Simplex::Simplex(Matrix* A, std::vector<double>* st, std::vector<double>* c, TT 
 	}
 }
 
-size_t Simplex::Num_Var(std::vector<double>* vector) {
-	for (size_t i = 1; i < vector->size(); i++) {
-		if (fabs((*vector)[i] - 1) < pow(10, -5))
+size_t Simplex::Num_Var(std::vector<double>& vector) {
+	for (size_t i = 1; i < vector.size(); i++) {
+		if (fabs(vector[i] - 1) < EPS)
 			return i - 1;
 	}
+	return 0;
 }
 
 size_t Simplex::Determine(size_t i) {
 	size_t min1 = 0;
 	for (min1 = 0; min1 < data.size(); min1++) {
-		if (data[min1].first[i] > pow(10, -5)) {
+		if (data[min1].first[i] > EPS) {
 			break;
 		}
 	}
 	std::cout << std::endl;
 	for (size_t j = min1; j < data.size(); j++) {
-		if (data[j].first[i] > pow(10, -5) && (data[j].first[0] / data[j].first[i] < data[min1].first[0] / data[min1].first[i])) {
+		if (data[j].first[i] > EPS && (data[j].first[0] / data[j].first[i] < data[min1].first[0] / data[min1].first[i])) {
 			min1 = j; 
 		}
 		std::cout << data[j].first[0] / data[j].first[i] << std::endl;
@@ -209,7 +97,7 @@ size_t Simplex::Determine(size_t i) {
 void Simplex::Positive_b() {
 	int pos = -1;
 	for (size_t i = 0; i < data.size(); i++) {
-		if (data[i].first[0] < -pow(10, -5)) {
+		if (data[i].first[0] < -EPS) {
 			pos = i;
 			break;
 		}
@@ -217,12 +105,12 @@ void Simplex::Positive_b() {
 	if (pos == -1)
 		return;
 	for (size_t i = pos + 1; i < data.size(); i++) {
-		if ((data[i].first[0] < -pow(10, -5)) && (fabs(data[i].first[0]) > fabs(data[i].first[pos])))
+		if ((data[i].first[0] < -EPS) && (fabs(data[i].first[0]) > fabs(data[i].first[pos])))
 			pos = i;
 	}
 	int var = -1;
 	for (size_t i = 1; i < data[pos].first.size(); i++) {
-		if ((data[pos].first[i] < -pow(10, -5)))
+		if ((data[pos].first[i] < -EPS))
 			var = i;
 	}
 	if (var == -1) {
@@ -230,7 +118,7 @@ void Simplex::Positive_b() {
 		return;
 	}
 	for (size_t i = var + 1; i < data[pos].first.size(); i++) {
-		if ((data[pos].first[i] < -pow(10, -5)) && (fabs(data[pos].first[i]) > fabs(data[pos].first[var])))
+		if ((data[pos].first[i] < -EPS) && (fabs(data[pos].first[i]) > fabs(data[pos].first[var])))
 			var = i;
 	}
 	Choose(var, pos);
@@ -255,7 +143,7 @@ size_t Simplex::Check() {
 			max = i;
 		}
 	}
-	if (delta[max] < pow(10, -5)) {
+	if (delta[max] < EPS) {
 		return delta.size();
 	}
 	return max;
@@ -266,7 +154,7 @@ bool Simplex::Check_Data() {
 	for (size_t i = 0; i < data.size(); i++) {
 		check = 1;
 		for (size_t j = 1; j < data[i].first.size(); j++) {
-			if ((fabs(data[i].first[j]) < pow(10, -5)) || (data[i].first[j] * data[i].first[0] < pow(10, -5)))
+			if ((fabs(data[i].first[j]) < EPS) || (data[i].first[j] * data[i].first[0] < EPS))
 				check++;
 			else
 				break;
@@ -279,12 +167,12 @@ bool Simplex::Check_Data() {
 	for (size_t i = 1; i < data[0].first.size(); i++) {
 		check = 0;
 		size_t num_null = 0;
-		if (fabs(delta[i - 1]) < pow(10, -5))
+		if (fabs(delta[i - 1]) < EPS)
 			continue;
 		for (size_t j = 0; j < data.size(); j++) {
-			if ((fabs(data[j].first[i]) < pow(10, -5)) || (data[j].first[i] * delta[i - 1] < pow(10, -5)))
+			if ((fabs(data[j].first[i]) < EPS) || (data[j].first[i] * delta[i - 1] < EPS))
 				check++;
-			if (fabs(data[j].first[i]) < pow(10, -5)) {
+			if (fabs(data[j].first[i]) < EPS) {
 				num_null++;
 			}
 			else
@@ -320,7 +208,7 @@ void Simplex::Choose(size_t i, size_t min1) {
 	Positive_b();
 }
 
-double Simplex::Answer() {
+double Simplex::answer_func() {
 	if (have_ans) {
 		std::cout << "x[i]:" << std::endl;
 		for (size_t i = 0; i < data[0].first.size(); i++) {

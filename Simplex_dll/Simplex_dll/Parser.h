@@ -7,8 +7,15 @@
 #include "Linear.h"
 #include"Simplex.h"
 
-enum LT;
+//enum LT;
 struct Linear;
+
+enum LT {
+	LT_EQ = 0,
+	LT_GT,
+	LT_LE,
+	LT_ERROR
+};
 
 struct Parser {
 public:
@@ -44,13 +51,6 @@ enum KW {
 	KW_GT,
 	KW_LE,
 	KW_NULL
-};
-
-enum LT {
-	LT_EQ = 0,
-	LT_GT,
-	LT_LE,
-	LT_ERROR
 };
 
 struct Limitations {

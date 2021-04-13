@@ -6,7 +6,7 @@ Linear::Linear(std::vector<double>& function, Limitations& limitations, std::vec
 	objective_function(A.get_m()),
 	original_dimension(function.size()),
 	original_vars(function.size()),
-	task_type{ TT::TT_MIN },
+	task_type(TT::TT_MIN),
 	dual_program(nullptr) {
 
 	to_canonical(function, limitations, vars_sign);
@@ -84,7 +84,7 @@ void Linear::to_dual(std::vector<double>& function, Limitations& limitations, st
 			new_limitation[j] = limitations.limitations[j].first[i];
 		}
 		new_limitation[dual_function.size()] = function[i];
-		dual_limitations.add_limitations({ new_limitation, vars_sign[i] ? LT::LT_LE : LT::LT_EQ });
+		dual_limitations.add_limitations({ new_limitation, (vars_sign[i]) ? LT::LT_LE : LT::LT_EQ });
 	}
 
 	for (size_t i = 0; i < dual_function.size(); ++i) {
