@@ -22,7 +22,7 @@ public:
 	size_t get_n() const;
 	size_t get_m() const;
 	Matrix get_transposed() const;
-	std::vector<double> Gauss(std::vector<double> b);
+	std::vector<double> Gauss(std::vector<double>*);
 	void Change_Str(size_t i, size_t j);//меняет местами строки i и j
 	void Change_Col(size_t i, size_t j);//меняем местами столбцы i и j
 
@@ -48,8 +48,8 @@ enum __declspec(dllexport) TT {
 
 class __declspec(dllexport) Simplex {
 public:
-	Simplex(Matrix A, std::vector<double> b, std::vector<double> c, TT type_task);
-	void Answer();
+	Simplex(Matrix*, std::vector<double>*, std::vector<double>*, TT type_task);
+	double Answer();
 private:
 	std::vector<std::pair<std::vector<double>, size_t>> data;//неравенства, в которых переменные, выражаются через другие переменные
 	std::vector<double> func;//вектор, содержащий функцию
@@ -59,7 +59,7 @@ private:
 	void Choose(size_t i, size_t min);
 	size_t Determine(size_t i);
 	size_t Check();
-	size_t Num_Var(std::vector<double> vector);
+	size_t Num_Var(std::vector<double>*);
 	bool Check_Data();
 	void Positive_b();
 };

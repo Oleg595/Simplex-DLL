@@ -35,7 +35,7 @@ Matrix::Vector Matrix::operator[](size_t index) {
 	return Vector(matrix[index]);
 }
 
-std::vector<double> Matrix::Gauss(std::vector<double> b) {
+std::vector<double> Matrix::Gauss(std::vector<double>* b) {
 	for (size_t i = 0; i < n; i++) {
 		size_t str;
 		for (size_t j = 0; j < m; j++) {
@@ -48,7 +48,7 @@ std::vector<double> Matrix::Gauss(std::vector<double> b) {
 			if (j != str)
 				matrix[i][j] /= matrix[i][str];
 		}
-		b[i] /= matrix[i][str];
+		(*b)[i] /= matrix[i][str];
 		matrix[i][str] = 1.;
 		for (size_t j = 0; j < n; j++) {
 			if (j != i) {
@@ -56,12 +56,12 @@ std::vector<double> Matrix::Gauss(std::vector<double> b) {
 					if (q != str)
 						matrix[j][q] -= matrix[j][str] * matrix[i][q];
 				}
-				b[j] -= matrix[j][str] * b[i];
+				(*b)[j] -= matrix[j][str] * (*b)[i];
 				matrix[j][str] = 0.;
 			}
 		}
 	}
-	return b;
+	return (*b);
 }
 
 void Matrix::Change_Str(size_t i, size_t j) {
@@ -114,16 +114,16 @@ Matrix::~Matrix() {
 	delete[] matrix;
 }
 
-Simplex::Simplex(Matrix A, std::vector<double> st, std::vector<double> c, TT type_task) {
+Simplex::Simplex(Matrix* A, std::vector<double>* st, std::vector<double>* c, TT type_task) {
 	have_ans = true;
-	std::vector<double> b = A.Gauss(st);
-	for (size_t i = 0; i < A.get_n(); i++) {
-		std::vector<double> time_vector;
-		time_vector.push_back(b[i]);
-		for (size_t j = 0; j < A.get_m(); j++) {
-			time_vector.push_back(A[i][j]);
+	std::vector<double> b = A->Gauss(st);
+	for (size_t i = 0; i < A->get_n(); i++) {
+		std::vector<double>* time_vector = new std::vector<double>();
+		time_vector->push_back(b[i]);
+		for (size_t j = 0; j < A->get_m(); j++) {
+			time_vector->push_back((*A)[i][j]);
 		}
-		data.push_back({ time_vector, Num_Var(time_vector) });
+		data.push_back({ (*time_vector), Num_Var(time_vector) });
 	}
 	Positive_b();
 	if (have_ans == false)
@@ -133,10 +133,10 @@ Simplex::Simplex(Matrix A, std::vector<double> st, std::vector<double> c, TT typ
 	double coef = 1.;
 	if (type_task == TT_MAX)
 		coef = -1.;
-	for (i = 0; i < c.size(); i++) {
-		func.push_back(coef * c[i]);
+	for (i = 0; i < c->size(); i++) {
+		func.push_back(coef * (*c)[i]);
 	}
-	for (; i < A.get_m(); i++) {
+	for (; i < A->get_m(); i++) {
 		func.push_back(0.);
 	}
 	size_t max = 0;
@@ -182,9 +182,9 @@ Simplex::Simplex(Matrix A, std::vector<double> st, std::vector<double> c, TT typ
 	}
 }
 
-size_t Simplex::Num_Var(std::vector<double> vector) {
-	for (size_t i = 1; i < vector.size(); i++) {
-		if (fabs(vector[i] - 1) < pow(10, -5))
+size_t Simplex::Num_Var(std::vector<double>* vector) {
+	for (size_t i = 1; i < vector->size(); i++) {
+		if (fabs((*vector)[i] - 1) < pow(10, -5))
 			return i - 1;
 	}
 }
@@ -320,15 +320,15 @@ void Simplex::Choose(size_t i, size_t min1) {
 	Positive_b();
 }
 
-void Simplex::Answer() {
+double Simplex::Answer() {
 	if (have_ans) {
 		std::cout << "x[i]:" << std::endl;
 		for (size_t i = 0; i < data[0].first.size(); i++) {
 			std::cout << data[0].first[i] << ' ';
 		}
-		std::cout << std::endl;
-		std::cout << "F = " << answer << std::endl;
+		return answer;
 	}
-	else
-		std::cout << "No answer" << std::endl;
+	else {
+		return NAN;
+	}
 }
